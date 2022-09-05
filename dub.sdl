@@ -1,0 +1,7 @@
+name "xpx"
+description "A point-base drawing library."
+authors "YamaD"
+copyright "Copyright (c) 2022 YamaD"
+license "MIT"
+targetPath "build"
+dflags "-preview=shortenedMethods"
