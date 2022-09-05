@@ -2,7 +2,7 @@ module xpx.two.vec2;
 @safe:
 
 import std;
-import xpx.lib.utils;
+import xpx.utils;
 
 alias Pt2 = Vec2;
 alias Vec2 = _Vec2!real;
