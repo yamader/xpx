@@ -4,7 +4,6 @@ module xpx.two.vec2;
 import std;
 import xpx.utils;
 
-alias Pt2 = Vec2;
 alias Vec2 = _Vec2!real;
 
 struct _Vec2(Value) {
