@@ -3,14 +3,20 @@ module xpx.disp.base;
 
 import xpx.color;
 
+alias Layer = Color[][];
+
 interface Disp {
   enum defWidth = 800;
   enum defHeight = 600;
 
   size_t w() const;
   size_t h() const;
-  Color get(size_t x, size_t y) const;
-  Color set(T: Color)(size_t x, size_t y, auto ref T c);
+
+  // CRUD
+  size_t push(Layer buf);
+  Layer get(size_t key);
+  Layer set(size_t key, Layer buf);
+  size_t del(size_t key);
 }
 
 interface DispFile: Disp {

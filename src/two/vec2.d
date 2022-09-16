@@ -10,7 +10,7 @@ struct _Vec2(Value) {
   Value[2] _data;
 
   this(inout Value[] init) { _data = init; }
-  this(Value x, Value y) { _data = [x, y]; }
+  this(Value x, Value y) { this([x, y]); }
 
   auto x() const => _data[0];
   auto y() const => _data[1];
@@ -62,6 +62,7 @@ struct _Vec2(Value) {
 }
 
 auto dot(T: _Vec2!_T, U: _Vec2!_U, _T, _U)(auto ref T a, auto ref U b) => (a.x * b.x) + (a.y * b.y);
+auto cross(T: _Vec2!_T, U: _Vec2!_U, _T, _U)(auto ref T a, auto ref U b) => (a.x * b.y) - (a.y * b.x);
 
 unittest {
   auto a = Vec2([3, 4]);

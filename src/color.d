@@ -5,33 +5,38 @@ import std;
 import xpx.utils;
 
 struct Color {
-  ubyte[3] _rgb;
-  ubyte _mono;
+  ubyte[3] rgb;
+  ubyte mono;
+  ubyte alpha;
 
-  this(ubyte[] init) { set(init); }
-  this(ubyte r, ubyte g, ubyte b) { set(r, g, b); }
-  this(ubyte mono) { set(mono); }
-
-  auto set(ubyte[] init) {
-    _rgb = init;
-    _mono = _rgb.avg.to!ubyte;
-    return _rgb;
+  this(ubyte[] rgb, ubyte g, ubyte a) {
+    this.rgb = rgb;
+    mono = g;
+    alpha = a;
   }
-  auto set(ubyte r, ubyte g, ubyte b) {
-    _rgb = [r, g, b];
-    _mono = _rgb.avg.to!ubyte;
-    return _rgb;
+  this(ubyte[] rgb, ubyte a = 255) {
+    this(rgb, rgb.avg.to!ubyte, a);
   }
-  auto set(ubyte mono) {
-    _rgb[] = _mono = mono;
-    return _mono;
+  this(ubyte r, ubyte g, ubyte b, ubyte a = 255) {
+    this([r, g, b], a);
+  }
+  this(ubyte g, ubyte a = 255) {
+    this([g, g, g], g, a);
   }
 
-  auto r() const => _rgb[0];
-  auto g() const => _rgb[1];
-  auto b() const => _rgb[2];
-  auto mono() const => _mono;
+  auto r() const => rgb[0];
+  auto g() const => rgb[1];
+  auto b() const => rgb[2];
 
-  auto rgbs() const => _rgb.toa!string;
-  auto monos() const => _mono.to!string;
+  auto rgbs() const => rgb.toa!string;
+  auto monos() const => mono.to!string;
+}
+
+auto blend(Color bg, Color fg) {
+  if(fg.alpha == 255) return fg;
+  if(fg.alpha == 0) return bg;
+  auto fa = fg.alpha / real(255),
+       ba = bg.alpha / real(255);
+  // 暫定
+  return fg;
 }
