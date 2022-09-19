@@ -3,12 +3,24 @@ module xpx.disp.draw;
 
 import std;
 import xpx.two;
+import xpx.img;
 import xpx.color;
 import xpx.disp.base;
 
-// Dispのキーを返す
+// img
 
-size_t draw(T...)(Disp disp, T args) {
+size_t palce(T...)(Disp disp, T args) {
+  auto buf = new Layer(disp.h, disp.w);
+  buf.palce(args);
+  return disp.push(buf);
+}
+
+void place(Layer layer, PnmImg img, Vec2 pos /* LEFT BOTTOM */ ) {
+}
+
+// fill
+
+size_t fill(T...)(Disp disp, T args) {
   auto buf = new Layer(disp.h, disp.w);
   buf.fill(args);
   return disp.push(buf);
@@ -58,14 +70,15 @@ void fill(Layer layer, Circle cir, Color c) {
   }
 }
 
-void fill(Layer layer, Trigon2 tr, Color c) {
+void fill(T)(Layer layer, T py, Color c)
+ if(T == Trigon2 || T == Tetragon2) {
   auto w = layer[0].length,
        h = layer.length;
   size_t xmin = size_t.max,
          xmax = 0,
          ymin = size_t.max,
          ymax = 0;
-  foreach(p; tr.pts) {
+  foreach(p; py.pts) {
     xmin = min(xmin, p.x.to!size_t);
     xmax = max(xmax, p.x.to!size_t);
     ymin = min(ymin, p.y.to!size_t);
@@ -74,7 +87,7 @@ void fill(Layer layer, Trigon2 tr, Color c) {
   foreach(y; ymin .. ymax) {
     size_t begin;
     foreach(x; xmin .. xmax) {
-      if(tr.isIn(Vec2(x, y))) {
+      if(py.isIn(Vec2(x, y))) {
         begin = x;
         goto found;
       }
@@ -83,7 +96,7 @@ void fill(Layer layer, Trigon2 tr, Color c) {
    found:
     size_t end;
     foreach_reverse(x; xmin .. xmax) {
-      if(tr.isIn(Vec2(x, y))) {
+      if(py.isIn(Vec2(x, y))) {
         end = x;
         break;
       }

@@ -17,6 +17,10 @@ interface Disp {
   Layer get(size_t key);
   Layer set(size_t key, Layer buf);
   size_t del(size_t key);
+
+  void show(size_t key);
+  void hide(size_t key);
+  bool toggle(size_t key);
 }
 
 interface DispFile: Disp {

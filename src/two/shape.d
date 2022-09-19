@@ -32,14 +32,28 @@ struct Trigon2 {
 
   this(Vec2 a, Vec2 b, Vec2 c) {
     pts = [a, b, c];
-    _memo[0] = a-b;
-    _memo[1] = b-c;
-    _memo[2] = c-a;
+    _memo = [a-b, b-c, c-a];
   }
 
   bool isIn(Pt2 p) => (cross(_memo[0], pts[0]-p) > 0 &&
                        cross(_memo[1], pts[1]-p) > 0 &&
                        cross(_memo[2], pts[2]-p) > 0);
+}
+
+// 四方まで囲む
+struct Tetragon2 {
+  Vec2[4] pts;
+  Vec2[4] _memo;
+
+  this(Vec2 a, Vec2 b, Vec2 c, Vec2 d) {
+    pts = [a, b, c, d];
+    _memo = [a-b, b-c, c-d, d-a];
+  }
+
+  bool isIn(Pt2 p) => (cross(_memo[0], pts[0]-p) > 0 &&
+                       cross(_memo[1], pts[1]-p) > 0 &&
+                       cross(_memo[2], pts[2]-p) > 0 &&
+                       cross(_memo[3], pts[3]-p) > 0);
 }
 
 unittest {

@@ -7,12 +7,14 @@ import xpx.disp.base;
 
 private class DispPNM: DispFile {
   Layer[size_t] _layers;
+  bool[size_t] _show; // 見直す
   size_t _top;
   size_t _w, _h;
 
   this() { this(Disp.defWidth, Disp.defHeight); }
   this(size_t w, size_t h) {
     _layers[0] = new Layer(h, w);
+    _show[0] = true;
     _w = w, _h = h;
   }
 
@@ -25,20 +27,30 @@ private class DispPNM: DispFile {
   size_t push(Layer buf) {
     _top++;
     _layers[_top] = buf;
+    _show[_top] = true;
     return _top;
   }
-  Layer get(size_t key) => _layers[key];
-  Layer set(size_t key, Layer buf) => _layers[key] = buf;
+  Layer get(size_t key) => _layers.get(key, _layers[_top]);
+  Layer set(size_t key, Layer buf) {
+    if(!_show.keys.canFind(key)) _show[key] = true;
+    return _layers[key] = buf;
+  }
   size_t del(size_t key) {
     _layers.remove(key);
-    _top = _layers.keys.reduce!max;
+    _show.remove(key);
+    _top = _layers.keys.fold!max;
     return key;
   }
 
+  void show(size_t key) { _show[key] = true; }
+  void hide(size_t key) { _show[key] = false; }
+  bool toggle(size_t key) => _show[key] = !_show[key];
+
   Layer merge() {
     // メモ化的なやつしたい
-    auto layers = _layers.keys.sort.map!((i) => _layers[i]);
-    return layers.reduce!(
+    auto keys = _layers.keys.sort.filter!(i => _show[i]);
+    auto layers = keys.map!(i => _layers[i]);
+    return layers.fold!(
       (bg, fg) => zip(bg, fg).map!(
         (horiz) => zip(horiz[]).map!(
           (c) => blend(c[])
@@ -48,21 +60,23 @@ private class DispPNM: DispFile {
   }
 
   void write(string path) {
-    auto fout = File(path, "w");
-    fout.write(writes);
+    fwrite(File(path, "w"), merge);
   }
-
-  abstract string writes();
+  abstract void fwrite(File f, Layer layer);
 }
 
 class DispPBM: DispPNM {
   this() {}
   this(size_t w, size_t h) { super(w, h); }
 
-  override string writes() {
-    string s = "P1\n"~ws~" "~hs~"\n";
-    // wip
-    return s;
+  override void fwrite(File f, Layer layer) {
+    f.writeln("P1\n"~ws~" "~hs);
+    foreach_reverse(y; 0..h) {
+      foreach(x; 0..w) {
+        f.write("0 ");
+      }
+      f.writeln;
+    }
   }
 }
 
@@ -70,11 +84,14 @@ class DispPGM: DispPNM {
   this() {}
   this(size_t w, size_t h) { super(w, h); }
 
-  override string writes() {
-    string s = "P2\n"~ws~" "~hs~"\n255\n";
-    foreach_reverse(row; 0..h)
-      s ~= merge[row].map!`a.monos`.join(" ") ~ "\n";
-    return s;
+  override void fwrite(File f, Layer layer) {
+    f.writeln("P2\n"~ws~" "~hs~"\n255");
+    foreach_reverse(y; 0..h) {
+      foreach(x; 0..w) {
+        f.write(layer[y][x].monos ~ " ");
+      }
+      f.writeln;
+    }
   }
 }
 
@@ -82,10 +99,13 @@ class DispPPM: DispPNM {
   this() {}
   this(size_t w, size_t h) { super(w, h); }
 
-  override string writes() {
-    string s = "P3\n"~ws~" "~hs~"\n255\n";
-    foreach_reverse(row; 0..h)
-      s ~= merge[row].map!`a.rgbs.join(" ")`.join(" ") ~ "\n";
-    return s;
+  override void fwrite(File f, Layer layer) {
+    f.writeln("P3\n"~ws~" "~hs~"\n255");
+    foreach_reverse(y; 0..h) {
+      foreach(x; 0..w) {
+        f.write(layer[y][x].rgbs.join(" ") ~ " ");
+      }
+      f.writeln;
+    }
   }
 }

@@ -7,13 +7,13 @@ void main() {
   enum blue = Color(0, 0, 255);
   enum yellow = Color(255, 255, 0);
 
-  d.draw(
+  d.fill(
     Rect(Vec2(10, 10), Vec2(90, 90)),
     blue);
-  d.draw(
+  d.fill(
     Trigon2(Vec2(15, 15), Vec2(85, 15), Vec2(50, 85)),
     yellow);
-  d.draw(
+  d.fill(
     Circle(Vec2(50, 45), 25),
     red);
 
