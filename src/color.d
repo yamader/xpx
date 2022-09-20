@@ -14,13 +14,17 @@ struct Color {
     mono = g;
     alpha = a;
   }
-  this(ubyte[] rgb, ubyte a = 255) {
-    this(rgb, rgb.avg.to!ubyte, a);
+  this(int[] rgb, ubyte a = 255) {
+    this(rgb.toa!ubyte, rgb.avg.to!ubyte, a);
   }
-  this(ubyte r, ubyte g, ubyte b, ubyte a = 255) {
+  this(int rl, int gl, int bl, ubyte a = 255) {
+    auto r = cast(ubyte)rl,
+         g = cast(ubyte)gl,
+         b = cast(ubyte)bl;
     this([r, g, b], a);
   }
-  this(ubyte g, ubyte a = 255) {
+  this(int gl, ubyte a = 255) {
+    auto g = cast(ubyte)gl;
     this([g, g, g], g, a);
   }
 

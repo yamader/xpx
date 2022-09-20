@@ -7,9 +7,10 @@ import xpx.color;
 import xpx.img.base;
 
 class PnmImg: Img {
-  string _path;
+  string _path, _pathMask;
+  bool _mask;
   Color[][] _data;
-  size_t _worig, _horig;
+  size_t _w, _h;
   real _xr = 1,
        _yr = 1;
 
@@ -17,17 +18,31 @@ class PnmImg: Img {
   bool _cached;
 
   this(string path) { _path = path; }
+  this(string path, string pathMask) {
+    _path = path;
+    _pathMask = pathMask;
+    _mask = true;
+  }
 
-  real w() const => _worig * _xr;
-  real h() const => _horig * _yr;
+  real w() const => _w * _xr;
+  real h() const => _h * _yr;
 
   void scale(real xr, real yr) {
     _xr = xr;
     _yr = yr;
+    _cached = false;
+    doCache;
   }
   void scaleAbs(real x, real y) {
-    _xr = x / real(_worig);
-    _yr = y / real(_horig);
+    _xr = x / real(_w);
+    _yr = y / real(_h);
+    _cached = false;
+    doCache;
+  }
+
+  Color[][] data() {
+    if(_cached) doCache;
+    return _cache;
   }
 
   void load() @system {
@@ -35,6 +50,7 @@ class PnmImg: Img {
 
     auto f = File(_path);
     scope(exit) f.close;
+    char[] sbuf;
     _data = [];
 
     // type
@@ -45,36 +61,84 @@ class PnmImg: Img {
       case "P3": type = PPM; break;
       default: throw new Exception("未実装");
     }
+
     // size
-    auto size = f.readln.chomp.split(" ").toa!size_t;
-    _worig = size[0], _horig = size[1];
-    // read
-    char[] buf;
-    auto nums() => buf.chomp.split(" ").filter!`a.length`.array.toa!ubyte;
+    while(f.readln(sbuf)) if(sbuf[0] != '#') {
+      auto a = sbuf.chomp.split(" ").array.toa!size_t;
+      _w = a[0], _h = a[1];
+      break;
+    }
+
+    // data
+    ubyte[] buf;
+    while(f.readln(sbuf)) {
+      if(sbuf[0] != '#')
+        buf ~= sbuf.chomp.split(" ").filter!`a.length`.array.toa!ubyte;
+    }
+
+    ubyte max;
+    if(type == Type.PGM || type == Type.PPM)
+      max = buf.pop;
     final switch(type) with(Type) {
       case PBM: {
-        while(f.readln(buf))
-          _data ~= nums.map!(i => Color(i ? 255 : 0)).array;
+        _data = buf.chunks(_w).map!(row =>
+          row.map!(i => Color(i ? 255 : 0)).array
+        ).array.reverse;
         break;
       }
       case PGM: {
-        auto max = f.readln.chomp.to!ubyte;
-        while(f.readln(buf))
-          _data ~= nums.map!(i => Color(cast(ubyte)(i * 255 / max))).array;
+        _data = buf.chunks(_w).map!(row =>
+          row.map!(i => Color(i * 255 / max)).array
+        ).array.reverse;
         break;
       }
       case PPM: {
-        auto max = f.readln.chomp.to!ubyte;
-        while(f.readln(buf))
-          _data ~= nums.chunks(3).map!(i =>
-            Color(i.map!(j => cast(ubyte)(j * 255 / max)).array)
-          ).array;
+        _data = buf.chunks(3*_w).map!(row =>
+          row.chunks(3).map!(i =>
+            Color(i.map!(j => j * 255 / max).array)
+          ).array
+        ).array.reverse;
         break;
       }
     }
+
+    if(_mask) {
+      auto fmask = File(_pathMask);
+      scope(exit) fmask.close;
+
+      // validator
+      Type mtyp;
+      switch(fmask.readln.chomp) with(Type) {
+        case "P1": mtyp = PBM; break;
+        case "P2": mtyp = PGM; break;
+        default: throw new Exception("マスクはP1, P2しか使えない");
+      }
+      while(fmask.readln(sbuf)) if(sbuf[0] != '#') {
+        auto a = sbuf.chomp.split(" ").array.toa!size_t;
+        if(_w != a[0] || _h != a[1]) throw new Exception("mask size mismatch");
+        break;
+      }
+      if(mtyp == Type.PGM) fmask.readln; // size
+
+      // data
+      ubyte[][] mask;
+      buf = [];
+      while(fmask.readln(sbuf)) {
+        if(sbuf[0] != '#')
+          buf ~= sbuf.chomp.split(" ").filter!`a.length`.array.toa!ubyte;
+      }
+      mask = buf.chunks(_w).array.reverse;
+      foreach(y; 0.._h) foreach(x; 0.._w) {
+        if(!mask[y][x]) _data[y][x].alpha = 0;
+      }
+    }
+
+    doCache;
   }
 
-  void cache() {
-    // update cache when resize image
+  void doCache() {
+    // todo: scaleを反映する
+    _cache = _data;
+    _cached = true;
   }
 }

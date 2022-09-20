@@ -1,7 +1,7 @@
 module xpx.img.base;
 @safe:
 
-import xpx.disp.base;
+import xpx.color;
 
 // ラスタ
 interface Img {
@@ -10,6 +10,8 @@ interface Img {
 
   void scale(real xr, real yr);
   void scaleAbs(real x, real y);
+
+  Color[][] data();
 
   void load() @system;
 }

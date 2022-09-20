@@ -72,10 +72,9 @@ class DispPBM: DispPNM {
   override void fwrite(File f, Layer layer) {
     f.writeln("P1\n"~ws~" "~hs);
     foreach_reverse(y; 0..h) {
-      foreach(x; 0..w) {
-        f.write("0 ");
-      }
-      f.writeln;
+      foreach(x; 0..w-1)
+        f.write("0", " ");
+      f.writeln("0");
     }
   }
 }
@@ -87,10 +86,9 @@ class DispPGM: DispPNM {
   override void fwrite(File f, Layer layer) {
     f.writeln("P2\n"~ws~" "~hs~"\n255");
     foreach_reverse(y; 0..h) {
-      foreach(x; 0..w) {
-        f.write(layer[y][x].monos ~ " ");
-      }
-      f.writeln;
+      foreach(x; 0..w-1)
+        f.write(layer[y][x].monos, " ");
+      f.writeln(layer[y][w-1].monos);
     }
   }
 }
@@ -102,10 +100,9 @@ class DispPPM: DispPNM {
   override void fwrite(File f, Layer layer) {
     f.writeln("P3\n"~ws~" "~hs~"\n255");
     foreach_reverse(y; 0..h) {
-      foreach(x; 0..w) {
-        f.write(layer[y][x].rgbs.join(" ") ~ " ");
-      }
-      f.writeln;
+      foreach(x; 0..w-1)
+        f.write(layer[y][x].rgbs.join(" "), " ");
+      f.writeln(layer[y][w-1].rgbs.join(" "));
     }
   }
 }

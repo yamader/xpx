@@ -9,13 +9,23 @@ import xpx.disp.base;
 
 // img
 
-size_t palce(T...)(Disp disp, T args) {
+size_t place(T...)(Disp disp, T args) {
   auto buf = new Layer(disp.h, disp.w);
-  buf.palce(args);
+  buf.place(args);
   return disp.push(buf);
 }
 
-void place(Layer layer, PnmImg img, Vec2 pos /* LEFT BOTTOM */ ) {
+void place(Layer layer, Img img, Vec2 pos /* LEFT BOTTOM */ ) {
+  auto w = layer[0].length,
+       h = layer.length;
+  if(w < pos.x || h < pos.y) return;
+  auto ox = pos.x.to!size_t,
+       oy = pos.y.to!size_t,
+       px = min(w, (pos.x + img.w).to!size_t),
+       py = min(h, (pos.y + img.h).to!size_t);
+  foreach(y; oy..py)
+    foreach(x; ox..px)
+      layer[y][x] = img.data[y-oy][x-ox];
 }
 
 // fill
@@ -33,11 +43,9 @@ void fill(Layer layer, Rect rect, Color c) {
        xmax = min(w, rect.rt.x.to!size_t),
        ymin = max(0, rect.lb.y.to!size_t),
        ymax = min(h, rect.rt.y.to!size_t);
-  foreach(y; ymin .. ymax) {
-    foreach(x; xmin .. xmax) {
+  foreach(y; ymin..ymax)
+    foreach(x; xmin..xmax)
       layer[y][x] = c;
-    }
-  }
 }
 
 void fill(Layer layer, Circle cir, Color c) {
@@ -47,9 +55,9 @@ void fill(Layer layer, Circle cir, Color c) {
        xmax = min(w, (cir.c.x + cir.r).to!size_t),
        ymin = max(0, (cir.c.y - cir.r).to!size_t),
        ymax = min(h, (cir.c.y + cir.r).to!size_t);
-  foreach(y; ymin .. ymax) {
+  foreach(y; ymin..ymax) {
     size_t begin;
-    foreach(x; xmin .. xmax) {
+    foreach(x; xmin..xmax) {
       if((Vec2(x, y) - cir.c).len <= cir.r) {
         begin = x;
         goto found;
@@ -58,20 +66,20 @@ void fill(Layer layer, Circle cir, Color c) {
     continue;
    found:
     size_t end;
-    foreach_reverse(x; xmin .. xmax) {
+    foreach_reverse(x; xmin..xmax) {
       if((Vec2(x, y) - cir.c).len <= cir.r) {
         end = x;
         break;
       }
     }
-    foreach(x; begin .. end+1) {
+    foreach(x; begin..end+1) {
       layer[y][x] = c;
     }
   }
 }
 
 void fill(T)(Layer layer, T py, Color c)
- if(T == Trigon2 || T == Tetragon2) {
+ if(is(T: Trigon2) || is(T: Tetragon2)) {
   auto w = layer[0].length,
        h = layer.length;
   size_t xmin = size_t.max,
@@ -84,9 +92,9 @@ void fill(T)(Layer layer, T py, Color c)
     ymin = min(ymin, p.y.to!size_t);
     ymax = max(ymax, p.y.to!size_t);
   }
-  foreach(y; ymin .. ymax) {
+  foreach(y; ymin..ymax) {
     size_t begin;
-    foreach(x; xmin .. xmax) {
+    foreach(x; xmin..xmax) {
       if(py.isIn(Vec2(x, y))) {
         begin = x;
         goto found;
@@ -95,13 +103,13 @@ void fill(T)(Layer layer, T py, Color c)
     continue;
    found:
     size_t end;
-    foreach_reverse(x; xmin .. xmax) {
+    foreach_reverse(x; xmin..xmax) {
       if(py.isIn(Vec2(x, y))) {
         end = x;
         break;
       }
     }
-    foreach(x; begin .. end+1) {
+    foreach(x; begin..end+1) {
       layer[y][x] = c;
     }
   }
